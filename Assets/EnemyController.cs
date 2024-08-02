@@ -109,7 +109,7 @@ public class EnemyController : NetworkBehaviour
     private void OnCollisionEnter(Collision collision)
     {
         BaseController player = collision.gameObject.GetComponent<BaseController>();
-        if(collision.gameObject.layer == 6)
+        if (collision.gameObject.layer == 6)
         {
             animator.SetBool("Attack", true);
             player.TakeDamage(20f);

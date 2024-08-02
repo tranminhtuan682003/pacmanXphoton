@@ -17,6 +17,7 @@ Library: D:\pacmanXphoton\Temp\BurstOutput\tempburstlibs\armeabi-v7a\lib_burst_g
 --assembly-defines=Unity.AI.Navigation;
 --assembly-defines=Unity.Burst;
 --assembly-defines=Unity.VisualScripting.Core;
+--assembly-defines=Fusion.Addons.Physics;
 --assembly-defines=Unity.RenderPipelines.Universal.Config.Runtime;
 --assembly-defines=Unity.VisualScripting.Flow;
 --assembly-defines=Unity.RenderPipeline.Universal.ShaderLibrary;
@@ -85,6 +86,7 @@ Library: D:\pacmanXphoton\Temp\BurstOutput\tempburstlibs\armeabi-v7a\lib_burst_g
 --assembly-defines=Unity.AI.Navigation;
 --assembly-defines=Unity.Burst;
 --assembly-defines=Unity.VisualScripting.Core;
+--assembly-defines=Fusion.Addons.Physics;
 --assembly-defines=Unity.RenderPipelines.Universal.Config.Runtime;
 --assembly-defines=Unity.VisualScripting.Flow;
 --assembly-defines=Unity.RenderPipeline.Universal.ShaderLibrary;

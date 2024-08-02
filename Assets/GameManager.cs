@@ -12,11 +12,16 @@ public class GameManager : MonoBehaviour
     public Slider loadSlider;
     public List<Transform> fans;
     public TextMeshProUGUI score;
-    int numberScore;
+    public TextMeshProUGUI timerText; // Assuming you have a TextMeshProUGUI component to display the timer
+    private int numberScore;
+    private int minutes;
+    private int seconds;
+    private int ticks;
+
 
     private void Awake()
     {
-        if(instance == null)
+        if (instance == null)
         {
             instance = this;
             DontDestroyOnLoad(gameObject);
@@ -26,14 +31,16 @@ public class GameManager : MonoBehaviour
             Destroy(gameObject);
         }
     }
+
     void Start()
     {
         loadScene.SetActive(true);
         loadSlider.value = 0;
         numberScore = 0;
+        StartCoroutine(TimePlay());
     }
 
-    
+
     void Update()
     {
         loadScreen();
@@ -43,14 +50,15 @@ public class GameManager : MonoBehaviour
     private void loadScreen()
     {
         loadSlider.value += Random.Range(0.0005f, 0.015f);
-        if (loadSlider.value >=1)
+        if (loadSlider.value >= 1)
         {
             loadScene.SetActive(false);
         }
     }
+
     private void Fan()
     {
-        foreach(var item in fans)
+        foreach (var item in fans)
         {
             item.Rotate(Vector3.up, 120f * Time.deltaTime);
         }
@@ -76,5 +84,33 @@ public class GameManager : MonoBehaviour
     public void Exit()
     {
         SceneManager.LoadScene(0);
+    }
+
+    private IEnumerator TimePlay()
+    {
+        int totalSeconds = 120;
+
+        while (totalSeconds > 0)
+        {
+            int minutes = totalSeconds / 60;
+            int seconds = totalSeconds % 60;
+
+            if (timerText != null)
+            {
+                timerText.text = string.Format("{0:00}:{1:00}", minutes, seconds);
+            }
+            if(minutes == 0 && seconds <= 30)
+            {
+                timerText.color = Color.red;
+            }
+            yield return new WaitForSeconds(1f);
+            totalSeconds--;
+        }
+        OnTimerEnd();
+    }
+
+    private void OnTimerEnd()
+    {
+        Debug.Log("Timer ended!");
     }
 }

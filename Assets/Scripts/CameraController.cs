@@ -3,16 +3,13 @@
 public class CameraController : MonoBehaviour
 {
     private Transform target;
-    public Vector3 offset;
-    [SerializeField] private float speed = 10f;
+    [SerializeField] Vector3 offset;
 
     private void LateUpdate()
     {
         if (target != null)
         {
-            Vector3 targetPosition = target.position + offset;
-            transform.position = Vector3.Slerp(transform.position, targetPosition, speed * Time.deltaTime);
-            transform.LookAt(target);
+            transform.position = target.position - offset;
         }
     }
 

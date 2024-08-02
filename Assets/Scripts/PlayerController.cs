@@ -3,15 +3,14 @@ using Fusion;
 
 public class PlayerController : BaseController
 {
-    public Transform SpawnPoint;
     private float moveSpeed = 6f;
     private Rigidbody rb;
     private Animator animator;
     private Vector3 moveDirection = Vector3.zero;
     private float lastTapTime = 0f;
     private float doubleTapThreshold = 0.1f;
-    private bool isRunning;
-    private int tapCount = 0;
+
+    [Networked] private bool isRunning { get; set; }
 
     private void Awake()
     {
@@ -28,17 +27,12 @@ public class PlayerController : BaseController
 
     public override void FixedUpdateNetwork()
     {
-        if (Object.HasInputAuthority)
-        {
-            CheckInput();
-            Move();
-            //CheckAttack();
-        }
+        CheckInput();
     }
 
     private void CameraFollow()
     {
-        if (Object.HasInputAuthority)
+        if (HasInputAuthority)
         {
             Camera.main.GetComponent<CameraController>().SetTarget(transform);
         }
@@ -52,67 +46,26 @@ public class PlayerController : BaseController
 
             if (newMoveDirection != Vector3.zero)
             {
+                if (!isRunning)
+                {
+                    animator.SetBool("Run", true);
+                    isRunning = true;
+                }
+
                 moveDirection = newMoveDirection;
-                isRunning = true;
+                rb.velocity = moveDirection * moveSpeed;
+
+                Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
+                rb.MoveRotation(Quaternion.Slerp(rb.rotation, targetRotation, Runner.DeltaTime * 15f));
             }
-        }
-    }
-
-    protected override void Move()
-    {
-        if (isRunning)
-        {
-            rb.MovePosition(rb.position + moveDirection * moveSpeed * Runner.DeltaTime);
-            Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
-            rb.MoveRotation(Quaternion.Slerp(rb.rotation, targetRotation, Runner.DeltaTime * 15f));
-
-            animator.SetBool("Run", true);
-        }
-        else
-        {
-            rb.velocity = Vector3.zero;
-            animator.SetBool("Run", false);
-        }
-    }
-
-    private void CheckAttack()
-    {
-        if (Input.touchCount > 0)
-        {
-            Touch touch = Input.GetTouch(0);
-            if (touch.phase == TouchPhase.Began)
+            else
             {
-                float currentTime = Time.time;
-                if (currentTime - lastTapTime <= doubleTapThreshold)
+                if (isRunning)
                 {
-                    tapCount++;
-                    if (tapCount == 2)
-                    {
-                        if (SpawnPoint != null && Object.HasInputAuthority)
-                        {
-                            // Call RPC to notify all clients to fire the bullet
-                            RPC_FireBullet(SpawnPoint.position, SpawnPoint.rotation);
-                        }
-                        tapCount = 0; // Reset tap count after shooting
-                    }
+                    animator.SetBool("Run", false);
+                    isRunning = false;
                 }
-                else
-                {
-                    tapCount = 1; // Reset tap count if time between taps is too long
-                }
-                lastTapTime = currentTime;
-            }
-        }
-    }
-
-    [Rpc(RpcSources.InputAuthority, RpcTargets.All)]
-    private void RPC_FireBullet(Vector3 position, Quaternion rotation)
-    {
-        if (ObjectPool.instance != null && Runner != null)
-        {
-            if (Runner.IsServer)
-            {
-                ObjectPool.instance.Fire("BulletPlayer", position, rotation, Runner, Object.InputAuthority);
+                rb.velocity = Vector3.zero;
             }
         }
     }
@@ -127,7 +80,6 @@ public class PlayerController : BaseController
         if (Object != null && Runner != null)
         {
             Runner.Despawn(Object);
-            GameManager.instance.Exit();
         }
     }
 }
