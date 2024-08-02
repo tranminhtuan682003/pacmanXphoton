@@ -6,10 +6,12 @@ public class ObjectPool : MonoBehaviour
 {
     public static ObjectPool instance;
 
+    public Transform parent;
     public List<NetworkObject> bulletPrefabs;
     public int poolSize = 10;
 
     private Dictionary<string, Queue<NetworkObject>> poolDictionary;
+    private NetworkRunner runner;
 
     private void Awake()
     {
@@ -26,11 +28,23 @@ public class ObjectPool : MonoBehaviour
 
     private void Start()
     {
-        InitObjectPools();
+        // Thực hiện các hành động khác trong Start nếu cần
+    }
+
+    public void SetNetworkRunner(NetworkRunner networkRunner)
+    {
+        runner = networkRunner;
+        InitObjectPools(); // Khởi tạo pool khi runner được gán
     }
 
     private void InitObjectPools()
     {
+        if (runner == null)
+        {
+            Debug.LogError("NetworkRunner chưa được gán.");
+            return;
+        }
+
         poolDictionary = new Dictionary<string, Queue<NetworkObject>>();
 
         foreach (NetworkObject prefab in bulletPrefabs)
@@ -40,7 +54,8 @@ public class ObjectPool : MonoBehaviour
 
             for (int i = 0; i < poolSize; i++)
             {
-                NetworkObject netObj = Instantiate(prefab, transform);
+                NetworkObject netObj = runner.Spawn(prefab, Vector3.zero, Quaternion.identity, runner.LocalPlayer);
+                netObj.transform.parent = parent;
                 netObj.gameObject.SetActive(false);
                 objectPool.Enqueue(netObj);
             }
@@ -51,23 +66,27 @@ public class ObjectPool : MonoBehaviour
 
     public NetworkObject Fire(string tag, Vector3 position, Quaternion rotation, NetworkRunner runner, PlayerRef owner)
     {
-        if (poolDictionary.ContainsKey(tag))
+        if (runner == null || poolDictionary == null || !poolDictionary.ContainsKey(tag))
         {
-            Queue<NetworkObject> pool = poolDictionary[tag];
+            return null;
+        }
 
-            if (pool.Count > 0)
+        Queue<NetworkObject> pool = poolDictionary[tag];
+
+        if (pool.Count > 0)
+        {
+            NetworkObject obj = pool.Dequeue();
+            if (obj != null)
             {
-                NetworkObject obj = pool.Dequeue();
-                if (obj != null)
+                if (runner.IsServer)
                 {
-                    // Đảm bảo rằng chỉ server mới spawn đối tượng mạng
-                    if (runner.IsServer)
-                    {
-                        runner.Spawn(obj, position, rotation, owner);
-                        obj.gameObject.SetActive(true);
-                        return obj;
-                    }
+                    obj.transform.position = position;
+                    obj.transform.rotation = rotation;
+                    obj.gameObject.SetActive(true);
+                    return obj;
                 }
+                // Return the object to the pool nếu không phải server
+                pool.Enqueue(obj);
             }
         }
         return null;

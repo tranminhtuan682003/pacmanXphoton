@@ -7,15 +7,15 @@ using static Fusion.NetworkRunnerCallbackArgs;
 
 public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 {
-    public static NetworkManager instance;
-    public NetworkRunner networkRunner;
-    public NetworkPrefabRef playerPrefab;
+    public static NetworkManager Instance { get; private set; }
+    public NetworkRunner NetworkRunner { get; private set; }
+    public NetworkPrefabRef PlayerPrefab;
 
     private void Awake()
     {
-        if (instance == null)
+        if (Instance == null)
         {
-            instance = this;
+            Instance = this;
             DontDestroyOnLoad(gameObject);
         }
         else
@@ -24,16 +24,14 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         }
     }
 
-    private void Start()
+    private async void Start()
     {
-        networkRunner = gameObject.AddComponent<NetworkRunner>();
-        networkRunner.ProvideInput = true;
-        networkRunner.AddCallbacks(this);
-        StartGame();
-    }
+        // Initialize the NetworkRunner
+        NetworkRunner = gameObject.AddComponent<NetworkRunner>();
+        NetworkRunner.ProvideInput = true;
+        NetworkRunner.AddCallbacks(this);
 
-    private async void StartGame()
-    {
+        // Start the game
         var startArgs = new StartGameArgs
         {
             GameMode = GameMode.AutoHostOrClient,
@@ -41,15 +39,25 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
             SceneManager = gameObject.AddComponent<NetworkSceneManagerDefault>()
         };
 
-        await networkRunner.StartGame(startArgs);
+        await NetworkRunner.StartGame(startArgs);
         Debug.Log("Game started");
+
+        // Gán runner cho ObjectPool
+        //ObjectPool.instance.SetNetworkRunner(NetworkRunner);
     }
 
     public void OnPlayerJoined(NetworkRunner runner, PlayerRef player)
     {
         if (runner.IsServer)
         {
-            runner.Spawn(playerPrefab, new Vector3(25f, 0f, -5f), Quaternion.identity, player);
+            if (PlayerPrefab.IsValid)
+            {
+                runner.Spawn(PlayerPrefab, new Vector3(25f, 0f, -5f), Quaternion.identity, player);
+            }
+            else
+            {
+                Debug.LogError("PlayerPrefab is not valid. Please check your configuration.");
+            }
         }
     }
 
@@ -67,21 +75,18 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
             {
                 Vector2 swipeDelta = touch.deltaPosition;
                 data.direction = new Vector3(swipeDelta.x, 0, swipeDelta.y).normalized;
-
-                Debug.Log($"Swipe Delta: {swipeDelta}, Direction: {data.direction}");
             }
         }
 
-        Debug.Log($"Input Data Direction: {data.direction}");
-
         input.Set(data);
+        Debug.Log($"Input set: {data.direction}");
     }
 
+    // Implement all INetworkRunnerCallbacks methods
     public void OnPlayerLeft(NetworkRunner runner, PlayerRef player) { }
     public void OnInputMissing(NetworkRunner runner, PlayerRef player, NetworkInput input) { }
     public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason) { }
     public void OnConnectedToServer(NetworkRunner runner) { }
-    public void OnDisconnectedFromServer(NetworkRunner runner) { }
     public void OnConnectRequest(NetworkRunner runner, ConnectRequest request, byte[] token) { }
     public void OnConnectFailed(NetworkRunner runner, NetAddress remoteAddress, NetConnectFailedReason reason) { }
     public void OnSessionListUpdated(NetworkRunner runner, List<SessionInfo> sessionList) { }

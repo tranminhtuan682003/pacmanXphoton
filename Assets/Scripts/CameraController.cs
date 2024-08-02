@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class CameraController : MonoBehaviour
 {
@@ -12,7 +10,8 @@ public class CameraController : MonoBehaviour
     {
         if (target != null)
         {
-            transform.position = Vector3.Slerp(transform.position, target.position + offset, speed * Time.deltaTime);
+            Vector3 targetPosition = target.position + offset;
+            transform.position = Vector3.Slerp(transform.position, targetPosition, speed * Time.deltaTime);
             transform.LookAt(target);
         }
     }

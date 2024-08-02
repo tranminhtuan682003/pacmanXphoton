@@ -30,14 +30,19 @@ public class BulletController : NetworkBehaviour
 
     private void Move()
     {
-        rb.velocity = Vector3.forward * speed;
+        if (rb != null)
+        {
+            rb.velocity = transform.forward * speed;
+        }
     }
+
     private IEnumerator ActiveBullet()
     {
         yield return new WaitForSeconds(3f);
+
         if (gameObject.activeInHierarchy)
         {
-            ObjectPool.instance.ReturnPooledObject(tagBullet, GetComponent<NetworkObject>());
+            ReturnToPool();
         }
     }
 
@@ -48,7 +53,15 @@ public class BulletController : NetworkBehaviour
         var player = other.GetComponentInParent<BaseController>();
         if (player != null)
         {
-            player.TakeDamage(200f);
+            player.TakeDamage(1f);
+            ReturnToPool();
+        }
+    }
+
+    private void ReturnToPool()
+    {
+        if (ObjectPool.instance != null)
+        {
             ObjectPool.instance.ReturnPooledObject(tagBullet, GetComponent<NetworkObject>());
         }
     }
