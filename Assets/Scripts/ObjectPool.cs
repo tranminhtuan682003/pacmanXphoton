@@ -85,7 +85,6 @@ public class ObjectPool : MonoBehaviour
                     obj.gameObject.SetActive(true);
                     return obj;
                 }
-                // Return the object to the pool nếu không phải server
                 pool.Enqueue(obj);
             }
         }

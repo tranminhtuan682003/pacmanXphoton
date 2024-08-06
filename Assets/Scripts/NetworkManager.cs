@@ -1,4 +1,5 @@
-﻿using ExitGames.Client.Photon;
+﻿
+using ExitGames.Client.Photon;
 using Fusion;
 using Fusion.Sockets;
 using System;
@@ -30,8 +31,8 @@ public class NetworkManager : SimulationBehaviour, INetworkRunnerCallbacks
             Scene = scene,
             SceneManager = gameObject.AddComponent<NetworkSceneManagerDefault>()
         });
+        ObjectPool.instance.SetNetworkRunner(_networkRunner);
     }
-
 
     private void Update()
     {
@@ -54,7 +55,14 @@ public class NetworkManager : SimulationBehaviour, INetworkRunnerCallbacks
 
                 if (swipeDelta.magnitude > 20) // Ngưỡng để xác định vuốt
                 {
-                    dir = new Vector3(swipeDelta.x, 0, swipeDelta.y).normalized;
+                    if (Mathf.Abs(swipeDelta.x) > Mathf.Abs(swipeDelta.y))
+                    {
+                        dir = new Vector3(swipeDelta.x, 0, 0).normalized;
+                    }
+                    else
+                    {
+                        dir = new Vector3(0, 0, swipeDelta.y).normalized;
+                    }
                     lastMousePosition = currentMousePosition;
                 }
             }
